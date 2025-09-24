@@ -95,6 +95,9 @@ def get_machine_state():
     # CPU
     number_of_cpu = psutil.cpu_count(logical=True)
     cpu_utilization = psutil.cpu_percent(interval=1)
+    
+    # Process count
+    total_processes = len(psutil.pids())
 
     # Memory
     mem = psutil.virtual_memory()
@@ -155,6 +158,7 @@ def get_machine_state():
         "username": username,
         "hostname": hostname,
         "number_of_cpu": number_of_cpu,
+        "total_processes": total_processes,
         "memory_size": memory_size,
         "cpu_utilization": cpu_utilization,
         "memory_utilization": memory_utilization,
