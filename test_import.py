@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""
-Test script to demonstrate how other Python code can import and use the machine info module.
-"""
-
 import main  # Import our machine info module
 import time 
 def test_dict_import():
