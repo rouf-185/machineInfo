@@ -8,6 +8,8 @@ import subprocess
 import getpass
 import socket
 import shutil
+from datetime import datetime
+import argparse
 
 def run_cmd(cmd):
     try:
@@ -194,7 +196,101 @@ def get_machine_info_dict():
     return get_machine_state()
 
 
-# if __name__ == "__main__":
-#     # When run directly, print the JSON output
-#     state = get_machine_state()
-#     print(json.dumps(state, indent=4))
+def save_machine_info_to_file(base_path=None):
+    """
+    Save machine information to a JSON file with timestamp in the filename.
+    Creates the directory if it doesn't exist.
+    
+    Args:
+        base_path (str, optional): Base directory path to save the file. 
+                                 If None, saves to current directory.
+    
+    Returns:
+        str: Full path to the saved file
+    """
+    # Use current directory if base_path is not provided
+    if base_path is None:
+        base_path = os.getcwd()
+    
+    # Create directory if it doesn't exist
+    os.makedirs(base_path, exist_ok=True)
+    
+    # Generate timestamp for filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{timestamp}.json"
+    
+    # Full path to the file
+    file_path = os.path.join(base_path, filename)
+    
+    # Get machine info and save to file
+    machine_info_json = get_machine_info_json()
+    
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(machine_info_json)
+    
+    return file_path
+
+
+def main():
+    """
+    Main function to handle CLI arguments and execute machine info collection.
+    """
+    parser = argparse.ArgumentParser(
+        description="Collect and save machine information to JSON file",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python main.py                           # Print JSON to console
+  python main.py --save                    # Save to current directory with timestamp
+  python main.py --save --path /tmp/logs   # Save to specific directory
+  python main.py --path ./machine_logs     # Save to relative directory
+        """
+    )
+    
+    parser.add_argument(
+        '--save', '-s',
+        action='store_true',
+        help='Save machine info to a timestamped JSON file'
+    )
+    
+    parser.add_argument(
+        '--path', '-p',
+        type=str,
+        default=None,
+        help='Base path where to save the JSON file (implies --save)'
+    )
+    
+    parser.add_argument(
+        '--quiet', '-q',
+        action='store_true',
+        help='Suppress output, only save file (useful for scripts)'
+    )
+    
+    args = parser.parse_args()
+    
+    # If path is provided, automatically enable save mode
+    if args.path:
+        args.save = True
+    
+    if args.save:
+        # Save to file
+        try:
+            saved_path = save_machine_info_to_file(args.path)
+            if not args.quiet:
+                print(f"Machine info saved to: {saved_path}")
+                file_size = os.path.getsize(saved_path)
+                print(f"File size: {file_size} bytes")
+        except Exception as e:
+            print(f"Error saving file: {e}")
+            return 1
+    else:
+        # Print to console
+        if not args.quiet:
+            machine_info_json = get_machine_info_json()
+            print(machine_info_json)
+    
+    return 0
+
+
+if __name__ == "__main__":
+    exit(main())
